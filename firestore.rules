@@ -1,0 +1,31 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Verdadeiro quando o usuário autenticado é o dono do recurso.
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+
+      match /expenses/{expenseId} {
+        allow read, create, update, delete: if isOwner(userId);
+      }
+
+      match /categories/{categoryId} {
+        allow read, create, update, delete: if isOwner(userId);
+      }
+    }
+
+    // Nega qualquer outro acesso por padrão.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
