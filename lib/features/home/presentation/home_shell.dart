@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/widgets/expandable_tabs.dart';
+
 /// Casca da navegação principal com barra inferior de 4 abas.
 class HomeShell extends StatelessWidget {
   const HomeShell({super.key, required this.navigationShell});
@@ -18,30 +20,14 @@ class HomeShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: navigationShell,
-      bottomNavigationBar: NavigationBar(
+      bottomNavigationBar: ExpandableTabs(
         selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: _onTap,
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_rounded),
-            label: 'Início',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.receipt_long_outlined),
-            selectedIcon: Icon(Icons.receipt_long_rounded),
-            label: 'Gastos',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.category_outlined),
-            selectedIcon: Icon(Icons.category_rounded),
-            label: 'Categorias',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline_rounded),
-            selectedIcon: Icon(Icons.person_rounded),
-            label: 'Perfil',
-          ),
+        onChanged: _onTap,
+        tabs: const [
+          ExpandableTabItem(icon: Icons.home_rounded, label: 'Início'),
+          ExpandableTabItem(icon: Icons.receipt_long_rounded, label: 'Gastos'),
+          ExpandableTabItem(icon: Icons.category_rounded, label: 'Categorias'),
+          ExpandableTabItem(icon: Icons.person_rounded, label: 'Perfil'),
         ],
       ),
     );

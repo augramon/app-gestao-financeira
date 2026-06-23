@@ -78,6 +78,13 @@ final summaryProvider = Provider.autoDispose<ExpenseSummary>((ref) {
   return ExpenseCalculator.summarize(expenses);
 });
 
+/// Todos os gastos do usuário (sem filtro de período), observados em tempo real.
+final allExpensesProvider = StreamProvider.autoDispose<List<Expense>>((ref) {
+  final uid = ref.watch(currentUidProvider);
+  if (uid == null) return Stream.value(const []);
+  return ref.watch(expenseRepositoryProvider).watchAll(uid);
+});
+
 /// Total de gastos cadastrados pelo usuário (todos os períodos).
 final totalExpenseCountProvider = FutureProvider.autoDispose<int>((ref) async {
   final uid = ref.watch(currentUidProvider);

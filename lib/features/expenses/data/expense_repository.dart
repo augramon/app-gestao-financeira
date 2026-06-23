@@ -32,6 +32,19 @@ class ExpenseRepository {
         );
   }
 
+  /// Observa todos os gastos do usuário (sem filtro de período), do mais
+  /// recente para o mais antigo.
+  Stream<List<Expense>> watchAll(String uid) {
+    return _col(uid)
+        .orderBy(FirestoreConstants.fieldDate, descending: true)
+        .snapshots()
+        .map(
+          (snap) => snap.docs
+              .map((d) => Expense.fromMap(d.id, uid, d.data()))
+              .toList(),
+        );
+  }
+
   /// Conta todos os gastos do usuário (sem filtro de período).
   Future<int> countAll(String uid) async {
     final snap = await _col(uid).count().get();

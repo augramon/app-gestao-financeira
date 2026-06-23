@@ -23,6 +23,22 @@ class ExpenseCalculator {
     return total(expenses) / expenses.length;
   }
 
+  /// Gasto médio por dia ao longo do intervalo coberto pelos gastos
+  /// (do dia mais antigo ao mais recente). 0 quando a lista está vazia.
+  static double dailyAverage(List<Expense> expenses) {
+    if (expenses.isEmpty) return 0;
+    var earliest = expenses.first.date;
+    var latest = expenses.first.date;
+    for (final e in expenses) {
+      if (e.date.isBefore(earliest)) earliest = e.date;
+      if (e.date.isAfter(latest)) latest = e.date;
+    }
+    final firstDay = DateTime(earliest.year, earliest.month, earliest.day);
+    final lastDay = DateTime(latest.year, latest.month, latest.day);
+    final days = lastDay.difference(firstDay).inDays + 1;
+    return total(expenses) / days;
+  }
+
   /// Soma por categoria, ordenada do maior para o menor.
   static List<CategoryBreakdown> breakdownByCategory(List<Expense> expenses) {
     if (expenses.isEmpty) return const [];
@@ -65,6 +81,7 @@ class ExpenseCalculator {
       highestCategoryName: highest?.categoryName,
       highestCategoryAmount: highest?.totalAmount ?? 0,
       averageExpense: average(expenses),
+      dailyAverage: dailyAverage(expenses),
       categoryBreakdown: breakdown,
     );
   }

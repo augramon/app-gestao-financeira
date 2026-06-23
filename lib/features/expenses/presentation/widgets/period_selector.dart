@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/utils/date_filter_utils.dart';
 import '../../../../core/widgets/segmented_toggle.dart';
+import '../../../../core/widgets/shad_icon_button.dart';
 import '../expense_providers.dart';
 
 /// Seletor de período: Hoje, Semana, Mês e intervalo personalizado.
@@ -57,10 +58,10 @@ class PeriodSelector extends ConsumerWidget {
               ),
             ),
             const SizedBox(width: 8),
-            IconButton.filledTonal(
+            ShadIconButton(
               tooltip: 'Filtrar por data',
-              isSelected: isCustom,
-              icon: const Icon(Icons.event_rounded),
+              icon: Icons.event_rounded,
+              selected: isCustom,
               onPressed: () => _pickCustom(context, ref, state),
             ),
           ],

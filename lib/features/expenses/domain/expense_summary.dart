@@ -29,6 +29,7 @@ class ExpenseSummary {
     required this.highestCategoryName,
     required this.highestCategoryAmount,
     required this.averageExpense,
+    required this.dailyAverage,
     required this.categoryBreakdown,
   });
 
@@ -37,6 +38,9 @@ class ExpenseSummary {
   final String? highestCategoryName;
   final double highestCategoryAmount;
   final double averageExpense;
+
+  /// Gasto médio por dia ao longo do período coberto pelos gastos.
+  final double dailyAverage;
   final List<CategoryBreakdown> categoryBreakdown;
 
   bool get isEmpty => expenseCount == 0;
@@ -47,6 +51,7 @@ class ExpenseSummary {
     highestCategoryName: null,
     highestCategoryAmount: 0,
     averageExpense: 0,
+    dailyAverage: 0,
     categoryBreakdown: [],
   );
 }
