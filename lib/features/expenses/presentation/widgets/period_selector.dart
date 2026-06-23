@@ -2,24 +2,34 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/utils/date_filter_utils.dart';
+import '../../../../core/widgets/segmented_toggle.dart';
 import '../expense_providers.dart';
 
 /// Seletor de período: Hoje, Semana, Mês e intervalo personalizado.
 class PeriodSelector extends ConsumerWidget {
   const PeriodSelector({super.key});
 
-  Future<void> _pickCustom(BuildContext context, WidgetRef ref) async {
+  Future<void> _pickCustom(
+    BuildContext context,
+    WidgetRef ref,
+    DateFilterState state,
+  ) async {
     final now = DateTime.now();
-    final picked = await showDateRangePicker(
+    final initial = state.filter == DateFilter.custom
+        ? (state.customStart ?? now)
+        : now;
+    final picked = await showDatePicker(
       context: context,
+      initialDate: initial,
       firstDate: DateTime(now.year - 5),
       lastDate: DateTime(now.year + 1, 12, 31),
-      locale: const Locale('pt', 'BR'),
+      helpText: 'Selecione a data',
+      cancelText: 'Cancelar',
+      confirmText: 'Filtrar',
     );
     if (picked != null) {
-      ref
-          .read(dateFilterProvider.notifier)
-          .setCustomRange(picked.start, picked.end);
+      // Filtra exatamente o dia escolhido (início/fim do mesmo dia).
+      ref.read(dateFilterProvider.notifier).setCustomRange(picked, picked);
     }
   }
 
@@ -29,27 +39,45 @@ class PeriodSelector extends ConsumerWidget {
     final controller = ref.read(dateFilterProvider.notifier);
     final isCustom = state.filter == DateFilter.custom;
 
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(
-          child: SegmentedButton<DateFilter>(
-            segments: const [
-              ButtonSegment(value: DateFilter.today, label: Text('Hoje')),
-              ButtonSegment(value: DateFilter.week, label: Text('Semana')),
-              ButtonSegment(value: DateFilter.month, label: Text('Mês')),
-            ],
-            selected: {isCustom ? DateFilter.month : state.filter},
-            showSelectedIcon: false,
-            onSelectionChanged: (s) => controller.setFilter(s.first),
+        Row(
+          children: [
+            Expanded(
+              child: SegmentedToggle<DateFilter>(
+                segments: const [
+                  SegmentItem(value: DateFilter.today, label: 'Hoje'),
+                  SegmentItem(value: DateFilter.week, label: 'Semana'),
+                  SegmentItem(value: DateFilter.month, label: 'Mês'),
+                ],
+                // Sem seleção quando um intervalo personalizado está ativo.
+                value: isCustom ? null : state.filter,
+                onChanged: controller.setFilter,
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton.filledTonal(
+              tooltip: 'Filtrar por data',
+              isSelected: isCustom,
+              icon: const Icon(Icons.event_rounded),
+              onPressed: () => _pickCustom(context, ref, state),
+            ),
+          ],
+        ),
+        if (isCustom && state.customStart != null) ...[
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: InputChip(
+              avatar: const Icon(Icons.event_rounded, size: 18),
+              label: Text(DateFilterUtils.formatDate(state.customStart!)),
+              onPressed: () => _pickCustom(context, ref, state),
+              onDeleted: () => controller.setFilter(DateFilter.month),
+              deleteIconColor: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        IconButton.filledTonal(
-          tooltip: 'Período personalizado',
-          isSelected: isCustom,
-          icon: const Icon(Icons.date_range_rounded),
-          onPressed: () => _pickCustom(context, ref),
-        ),
+        ],
       ],
     );
   }

@@ -38,9 +38,11 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
 
   String? _categoryId;
   PaymentMethod _paymentMethod = PaymentMethod.pix;
+  int _installments = 1;
   late DateTime _date;
 
   bool get _isEditing => widget.expense != null;
+  bool get _isCreditCard => _paymentMethod == PaymentMethod.creditCard;
 
   @override
   void initState() {
@@ -53,7 +55,14 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
     _note = TextEditingController(text: e?.note ?? '');
     _categoryId = e?.categoryId;
     _paymentMethod = e?.paymentMethod ?? PaymentMethod.pix;
+    _installments = e?.installments ?? 1;
     _date = e?.date ?? DateTime.now();
+    // Atualiza o valor exibido por parcela conforme o usuário digita o total.
+    _amount.addListener(_onAmountChanged);
+  }
+
+  void _onAmountChanged() {
+    if (_isCreditCard && _installments > 1 && mounted) setState(() {});
   }
 
   String _formatInitialAmount(double value) =>
@@ -61,6 +70,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
 
   @override
   void dispose() {
+    _amount.removeListener(_onAmountChanged);
     _amount.dispose();
     _description.dispose();
     _note.dispose();
@@ -117,6 +127,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
           date: _date,
           note: _note.text,
           createdAt: widget.expense?.createdAt,
+          installments: _isCreditCard ? _installments : 1,
         );
 
     if (!mounted) return;
@@ -235,9 +246,16 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                       (m) => DropdownMenuItem(value: m, child: Text(m.label)),
                     )
                     .toList(),
-                onChanged: (m) =>
-                    setState(() => _paymentMethod = m ?? _paymentMethod),
+                onChanged: (m) => setState(() {
+                  _paymentMethod = m ?? _paymentMethod;
+                  // Parcelamento só faz sentido no cartão de crédito.
+                  if (!_isCreditCard) _installments = 1;
+                }),
               ),
+              if (_isCreditCard) ...[
+                const SizedBox(height: AppConstants.spacingMd),
+                _buildInstallmentSection(theme),
+              ],
               const SizedBox(height: AppConstants.spacingMd),
               ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12),
@@ -271,6 +289,54 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  /// Seção de parcelamento, exibida apenas para cartão de crédito.
+  Widget _buildInstallmentSection(ThemeData theme) {
+    final total = CurrencyFormatter.tryParse(_amount.text);
+    final isParcelado = _installments > 1;
+
+    String optionLabel(int n) {
+      if (total != null && total > 0) {
+        return '${n}x de ${CurrencyFormatter.format(total / n)}';
+      }
+      return '${n}x';
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SwitchListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppConstants.radiusSm),
+            side: BorderSide(color: theme.colorScheme.outlineVariant),
+          ),
+          secondary: const Icon(Icons.splitscreen_rounded),
+          title: const Text('Compra parcelada?'),
+          subtitle: Text(isParcelado ? 'Parcelado' : 'À vista'),
+          value: isParcelado,
+          onChanged: (v) => setState(() => _installments = v ? 2 : 1),
+        ),
+        if (isParcelado) ...[
+          const SizedBox(height: AppConstants.spacingSm),
+          DropdownButtonFormField<int>(
+            initialValue: _installments,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'Número de parcelas',
+              prefixIcon: Icon(Icons.format_list_numbered_rounded),
+            ),
+            items: [
+              for (var n = 2; n <= 24; n++)
+                DropdownMenuItem(value: n, child: Text(optionLabel(n))),
+            ],
+            onChanged: (n) =>
+                setState(() => _installments = n ?? _installments),
+          ),
+        ],
+      ],
     );
   }
 }

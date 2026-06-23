@@ -22,6 +22,7 @@ class FirestoreConstants {
   static const String fieldCategoryName = 'categoryName';
   static const String fieldCategoryColor = 'categoryColor';
   static const String fieldPaymentMethod = 'paymentMethod';
+  static const String fieldInstallments = 'installments';
   static const String fieldDate = 'date';
   static const String fieldNote = 'note';
 

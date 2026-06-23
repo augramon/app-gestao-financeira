@@ -22,6 +22,7 @@ class Expense {
     required this.note,
     required this.createdAt,
     required this.updatedAt,
+    this.installments = 1,
   });
 
   final String id;
@@ -37,7 +38,17 @@ class Expense {
   final DateTime createdAt;
   final DateTime updatedAt;
 
+  /// Número de parcelas. 1 = à vista (não parcelado).
+  final int installments;
+
   Color get categoryColorValue => Color(categoryColor);
+
+  /// Verdadeiro quando a compra foi parcelada (mais de uma parcela).
+  bool get isInstallment => installments > 1;
+
+  /// Valor de cada parcela ([amount] é o valor total da compra).
+  double get installmentAmount =>
+      installments > 0 ? amount / installments : amount;
 
   Expense copyWith({
     double? amount,
@@ -49,6 +60,7 @@ class Expense {
     DateTime? date,
     String? note,
     DateTime? updatedAt,
+    int? installments,
   }) {
     return Expense(
       id: id,
@@ -63,6 +75,7 @@ class Expense {
       note: note ?? this.note,
       createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      installments: installments ?? this.installments,
     );
   }
 
@@ -74,6 +87,7 @@ class Expense {
       FirestoreConstants.fieldCategoryName: categoryName,
       FirestoreConstants.fieldCategoryColor: categoryColor,
       FirestoreConstants.fieldPaymentMethod: paymentMethod.name,
+      FirestoreConstants.fieldInstallments: installments,
       FirestoreConstants.fieldDate: Timestamp.fromDate(date),
       FirestoreConstants.fieldNote: note,
       FirestoreConstants.fieldCreatedAt: Timestamp.fromDate(createdAt),
@@ -95,6 +109,8 @@ class Expense {
       paymentMethod: PaymentMethodInfo.fromName(
         map[FirestoreConstants.fieldPaymentMethod] as String?,
       ),
+      installments:
+          (map[FirestoreConstants.fieldInstallments] as num?)?.toInt() ?? 1,
       date: _toDate(map[FirestoreConstants.fieldDate]),
       note: (map[FirestoreConstants.fieldNote] ?? '') as String,
       createdAt: _toDate(map[FirestoreConstants.fieldCreatedAt]),

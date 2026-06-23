@@ -47,11 +47,25 @@ class ExpenseListItem extends StatelessWidget {
           color: theme.colorScheme.onSurfaceVariant,
         ),
       ),
-      trailing: Text(
-        CurrencyFormatter.format(expense.amount),
-        style: theme.textTheme.titleMedium?.copyWith(
-          fontWeight: FontWeight.w700,
-        ),
+      trailing: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            CurrencyFormatter.format(expense.amount),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          if (expense.isInstallment)
+            Text(
+              '${expense.installments}x de ${CurrencyFormatter.format(expense.installmentAmount)}',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+        ],
       ),
     );
   }

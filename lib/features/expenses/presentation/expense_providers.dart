@@ -6,6 +6,7 @@ import '../../authentication/presentation/auth_controller.dart';
 import '../domain/expense.dart';
 import '../domain/expense_calculator.dart';
 import '../domain/expense_summary.dart';
+import '../domain/month_comparison.dart';
 
 /// Estado do filtro de período selecionado.
 class DateFilterState {
@@ -82,4 +83,36 @@ final totalExpenseCountProvider = FutureProvider.autoDispose<int>((ref) async {
   final uid = ref.watch(currentUidProvider);
   if (uid == null) return 0;
   return ref.watch(expenseRepositoryProvider).countAll(uid);
+});
+
+/// Gastos do mês corrente (independente do filtro de período selecionado).
+final _currentMonthExpensesProvider =
+    StreamProvider.autoDispose<List<Expense>>((ref) {
+      final uid = ref.watch(currentUidProvider);
+      if (uid == null) return Stream.value(const []);
+      final range = DateFilterUtils.rangeFor(DateFilter.month);
+      return ref.watch(expenseRepositoryProvider).watchExpenses(uid, range);
+    });
+
+/// Gastos do mês anterior.
+final _previousMonthExpensesProvider =
+    StreamProvider.autoDispose<List<Expense>>((ref) {
+      final uid = ref.watch(currentUidProvider);
+      if (uid == null) return Stream.value(const []);
+      final now = DateTime.now();
+      final range = DateFilterUtils.rangeFor(
+        DateFilter.month,
+        reference: DateTime(now.year, now.month - 1, 1),
+      );
+      return ref.watch(expenseRepositoryProvider).watchExpenses(uid, range);
+    });
+
+/// Comparação do gasto do mês atual com o mês passado (variação %).
+final monthComparisonProvider = Provider.autoDispose<MonthComparison>((ref) {
+  final current = ref.watch(_currentMonthExpensesProvider).value ?? const [];
+  final previous = ref.watch(_previousMonthExpensesProvider).value ?? const [];
+  return MonthComparison(
+    currentTotal: ExpenseCalculator.total(current),
+    previousTotal: ExpenseCalculator.total(previous),
+  );
 });

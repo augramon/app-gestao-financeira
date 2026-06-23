@@ -7,6 +7,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/widgets/app_error.dart';
 import '../../../core/widgets/app_loading.dart';
+import '../../../core/widgets/badge_delta.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/summary_card.dart';
 import '../../authentication/presentation/auth_controller.dart';
@@ -63,6 +64,8 @@ class HomeScreen extends ConsumerWidget {
               const PeriodSelector(),
               const SizedBox(height: AppConstants.spacingMd),
               _TotalCard(total: summary.totalAmount),
+              const SizedBox(height: AppConstants.spacingSm),
+              const _MonthComparisonRow(),
               const SizedBox(height: AppConstants.spacingMd),
               expensesAsync.when(
                 loading: () => const Padding(
@@ -117,6 +120,70 @@ class _TotalCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Métrica de variação do gasto do mês atual em relação ao mês passado.
+class _MonthComparisonRow extends ConsumerWidget {
+  const _MonthComparisonRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final comparison = ref.watch(monthComparisonProvider);
+    final delta = comparison.deltaPercent;
+
+    if (delta == null) {
+      return Row(
+        children: [
+          Icon(
+            Icons.compare_arrows_rounded,
+            size: 18,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              'Sem gastos no mês passado para comparar.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    final type = delta > 0
+        ? BadgeDeltaType.increase
+        : delta < 0
+        ? BadgeDeltaType.decrease
+        : BadgeDeltaType.neutral;
+    final label = delta > 0
+        ? 'a mais que o mês passado'
+        : delta < 0
+        ? 'a menos que o mês passado'
+        : 'igual ao mês passado';
+
+    return Row(
+      children: [
+        BadgeDelta(
+          value: '${delta.abs().toStringAsFixed(1)}%',
+          deltaType: type,
+          variant: BadgeDeltaVariant.solid,
+          higherIsBetter: false, // gastar mais é pior
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

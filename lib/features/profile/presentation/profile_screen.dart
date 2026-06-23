@@ -6,6 +6,7 @@ import '../../../app/router.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/date_filter_utils.dart';
 import '../../../core/widgets/confirm_dialog.dart';
+import '../../../core/widgets/theme_toggle.dart';
 import '../../authentication/presentation/auth_controller.dart';
 import '../../expenses/presentation/expense_providers.dart';
 import '../../settings/presentation/theme_controller.dart';
@@ -178,31 +179,34 @@ class _ThemeSelector extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     final mode = ref.watch(themeControllerProvider);
-    final controller = ref.read(themeControllerProvider.notifier);
+    final platformDark =
+        MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+    final isDark = switch (mode) {
+      ThemeMode.dark => true,
+      ThemeMode.light => false,
+      ThemeMode.system => platformDark,
+    };
 
-    return SegmentedButton<ThemeMode>(
-      segments: const [
-        ButtonSegment(
-          value: ThemeMode.light,
-          icon: Icon(Icons.light_mode_outlined),
-          label: Text('Claro'),
-        ),
-        ButtonSegment(
-          value: ThemeMode.dark,
-          icon: Icon(Icons.dark_mode_outlined),
-          label: Text('Escuro'),
-        ),
-        ButtonSegment(
-          value: ThemeMode.system,
-          icon: Icon(Icons.brightness_auto_outlined),
-          label: Text('Sistema'),
-        ),
-      ],
-      selected: {mode},
-      showSelectedIcon: false,
-      onSelectionChanged: (selection) =>
-          controller.setThemeMode(selection.first),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppConstants.spacingSm),
+      child: Row(
+        children: [
+          Icon(
+            isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: AppConstants.spacingMd),
+          Expanded(
+            child: Text(
+              isDark ? 'Tema escuro' : 'Tema claro',
+              style: theme.textTheme.bodyMedium,
+            ),
+          ),
+          const ThemeToggle(),
+        ],
+      ),
     );
   }
 }

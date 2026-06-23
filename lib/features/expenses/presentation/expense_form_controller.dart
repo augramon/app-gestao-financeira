@@ -21,6 +21,7 @@ class ExpenseFormController extends AsyncNotifier<void> {
     required DateTime date,
     required String note,
     DateTime? createdAt,
+    int installments = 1,
   }) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
@@ -43,6 +44,7 @@ class ExpenseFormController extends AsyncNotifier<void> {
         note: note.trim(),
         createdAt: createdAt ?? now,
         updatedAt: now,
+        installments: installments,
       );
 
       if (isNew) {
